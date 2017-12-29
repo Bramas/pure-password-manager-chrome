@@ -1,9 +1,9 @@
 {
   "name": "Pure Password Manager",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "manifest_version": 2,
-  "description": "This extension was created with the awesome extensionizr.com",
-  "homepage_url": "http://extensionizr.com",
+  "description": "generate website specific password from your main password",
+  "homepage_url": "https://github.com/Bramas/pure-password-manager",
   "icons": {
     "144": "assets/icon-144.png"
   },
@@ -21,8 +21,6 @@
   "permissions": [
     "declarativeContent",
     "storage",
-    "activeTab",
-    "http://*/*",
-    "https://*/*"
+    "activeTab"
   ]
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './page_action/index.css';
 import App from './page_action/App';
+import Paper from 'material-ui/Paper';
 
 import { MuiThemeProvider, createMuiTheme } from 'material-ui/styles';
 import blueGrey from 'material-ui/colors/blueGrey';
@@ -27,43 +28,85 @@ const styles = theme => ({
 
 const store = {
   error: false,
-  salt: false
+  salt: false,
+  tabId: null,
+  passwordFieldCount: 0
 }
 
 
-function sendPasswordToPage(password) {
+function init() {
   chrome.tabs.executeScript(null, {
     file: 'script_injection.js'
   }, function() {
-    chrome.tabs.query({active:true,currentWindow:true},function(tabs){
-      chrome.tabs.sendMessage(tabs[0].id,{password}, function(response){
-
-        console.log(response);
-        if(response.error) {
-          store.error = response.error;
-          render();
-          return;
-        }
-        if(response.success) {
-          window.close();
-          return;
-        }
+    chrome.tabs.query({active:true,currentWindow:true},
+      function(tabs)
+      {
+        store.tabId = tabs[0].id;
+        var currentTabUrl = tabs[0].url;
+        var regex =
+          /*12       3    45     6 7         8          9 A        B   C                   D  E        F 0   */
+          /* proto         user    pass      host         port     path                       query      frag */
+          /^((\w+):)?(\/\/((\w+)?(:(\w+))?@)?([^\/\?:]+)(:(\d+))?)?(\/?([^\/\?#][^\?#]*)?)?(\?([^#]+))?(#(\w*))?/;
+          var r = currentTabUrl.match(regex)
+          var host = r[8] ? r[8].split('.').slice(-2)[0] : "";
+          store.salt = host;
+          console.log('init Done, now asking for password destination', store);
+          chrome.tabs.sendMessage(store.tabId, {cmd:'whatDestination'}, function(response){
+            //if(response.activeCount == 0 && response.passwordCount >= 3) {
+            //  store.error = 'There are '+response.passwordCount+' password fields, so we'
+            //}
+            store.passwordFieldCount = response.passwordCount;
+            render();
+          });
       });
-    });
   });
+}
+init();
+function sendPasswordToPage(password) {
+  chrome.tabs.sendMessage(
+    store.tabId,
+    {password, cmd:'sendPassword'},
+    function(response){
+      console.log(response);
+      if(response.error) {
+        store.error = response.error;
+        render();
+        return;
+      }
+      if(response.success) {
+        window.close();
+        return;
+      }
+    }
+  );
 }
 
 const Action = withStyles(styles)(({password, classes}) =>
-  <Button
+  <span><Button
     onClick={() => sendPasswordToPage(password)}
     disabled={password === false}
     raised color="primary"
     className={classes.button} >
-      Insert
+      Insert in the page
   </Button>
+  {store.passwordFieldCount > 1 ?
+    <span>
+      {store.passwordFieldCount} empty password fields
+      will be filled automatically
+    </span> : ''
+  }
+  </span>
 )
 
 function render() {
+  if(store.passwordFieldCount == 0) {
+  ReactDOM.render(
+    <Paper style={{padding: 20}}>
+      There is no empty password field in the page. Clear the password fields
+      you want me to fill automatically, then click again on the extension.
+    </Paper>, document.getElementById('root'));
+    return;
+  }
   ReactDOM.render(
     <MuiThemeProvider theme={theme}>
       <App error={store.error} identiconSize={200} salt={store.salt} actionButton={Action} />
@@ -121,19 +164,6 @@ chrome.runtime.sendMessage(null,
   }
 );
 
-chrome.tabs.query({active:true,currentWindow:true},function(tabs){
-    //'tabs' will be an array with only one element: an Object describing the active tab
-    //  in the current window.
-    var currentTabUrl = tabs[0].url;
-    var regex =
-      /*12       3    45     6 7         8          9 A        B   C                   D  E        F 0   */
-      /* proto         user    pass      host         port     path                       query      frag */
-      /^((\w+):)?(\/\/((\w+)?(:(\w+))?@)?([^\/\?:]+)(:(\d+))?)?(\/?([^\/\?#][^\?#]*)?)?(\?([^#]+))?(#(\w*))?/;
-      var r = currentTabUrl.match(regex)
-      var host = r[8] ? r[8].split('.').slice(-2)[0] : "";
-      store.salt = host;
-      render();
-});
 
 /*chrome.storage.local.get('passphrase', function(object) {
   console.log(object.passphrase);
