@@ -5,20 +5,18 @@
   "description": "This extension was created with the awesome extensionizr.com",
   "homepage_url": "http://extensionizr.com",
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "144": "assets/icon-144.png"
   },
   "default_locale": "en",
   "background": {
-    "scripts": ["src/bg/background.js"],
+    "scripts": ["background.bundle.js"],
     "persistent": false
   },
-  "options_page": "src/options_custom/index.html",
+  "options_page": "options_custom/index.html",
   "page_action": {
-    "default_icon": "icons/icon19.png",
-    "default_title": "page action demo",
-    "default_popup": "src/page_action/page_action.html"
+    "default_icon": "assets/icon-144.png",
+    "default_title": "Pure PM",
+    "default_popup": "popup.html"
   },
   "permissions": [
     "declarativeContent",
