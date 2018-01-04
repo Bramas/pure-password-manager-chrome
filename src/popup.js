@@ -137,7 +137,7 @@ function render() {
   ReactDOM.render(
     <MuiThemeProvider theme={theme}>
       <div style={{width: 460, padding: 20}}>
-        <App error={store.error} identiconSize={200} salt={store.salt} actionButton={Action} />
+        <App error={store.error} identiconSize={200} defaultSalt={store.salt} actionButton={Action} />
       </div>
     </MuiThemeProvider>, document.getElementById('root'));
 }

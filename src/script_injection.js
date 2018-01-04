@@ -131,7 +131,6 @@ if(!window.injected)
                 }
                 txHash.setAttribute('txHash', hash);
                 document.body.appendChild(txHash);
-                console.log('Sent', {hash});
               }
             );
           }
@@ -142,7 +141,6 @@ if(!window.injected)
         }, options);
         const idInterval = setInterval(function() {
           const dom = document.getElementById(options.domID);
-          console.log('setInterval');
           if(dom) {
             clearInterval(idInterval);
             cb(dom.getAttribute('error'), dom.getAttribute('txHash'))
