@@ -1,0 +1,3 @@
+[submodule "src/page_action/pure-password-manager"]
+	path = src/page_action/pure-password-manager
+	url = https://github.com/bramas/pure-password-manager

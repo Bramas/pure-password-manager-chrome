@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './page_action/index.css';
-import App from './page_action/App';
+import config from './page_action/pure-password-manager/src/config';
+import App from './page_action/pure-password-manager/src/App';
 import Paper from 'material-ui/Paper';
 
 import { MuiThemeProvider, createMuiTheme } from 'material-ui/styles';
@@ -10,6 +11,7 @@ import deepPurple from 'material-ui/colors/deepPurple';
 import PropTypes from 'prop-types';
 import Button from 'material-ui/Button';
 import { withStyles } from 'material-ui/styles';
+import Eth from './page_action/pure-password-manager/src/ethereum';
 
 const theme = createMuiTheme({
   palette: {
@@ -50,24 +52,49 @@ function init() {
           var r = currentTabUrl.match(regex)
           var host = r[8] ? r[8].split('.').slice(-2)[0] : "";
           store.salt = host;
-          console.log('init Done, now asking for password destination', store);
+          console.debug('init Done, now asking for password destination', store);
           chrome.tabs.sendMessage(store.tabId, {cmd:'whatDestination'}, function(response){
             //if(response.activeCount == 0 && response.passwordCount >= 3) {
             //  store.error = 'There are '+response.passwordCount+' password fields, so we'
             //}
             store.passwordFieldCount = response.passwordCount;
+            console.log({web3: response.web3});
+
+            Eth.isPrivate = () => {
+              return response.web3.isPrivate;
+            }
+            Eth.isMetaMask = () => {
+              return response.web3.isMetaMask;
+            }
             render();
           });
       });
   });
 }
 init();
+
+Eth.saveFormat = (key, format, value, cb) => {
+  chrome.tabs.sendMessage(store.tabId,
+    {cmd:'sendTransaction', options:{
+      contractAddress: config.contractAddress,
+      contractABI: config.contractABI,
+      key,
+      format,
+      value
+    }},
+    function(response) {
+        console.log('sendTransaction Response', response);
+        cb(response.error, response.txHash)
+    }
+  );
+}
+
 function sendPasswordToPage(password) {
   chrome.tabs.sendMessage(
     store.tabId,
     {password, cmd:'sendPassword'},
     function(response){
-      console.log(response);
+      console.debug(response);
       if(response.error) {
         store.error = response.error;
         render();
@@ -109,7 +136,9 @@ function render() {
   }
   ReactDOM.render(
     <MuiThemeProvider theme={theme}>
-      <App error={store.error} identiconSize={200} salt={store.salt} actionButton={Action} />
+      <div style={{width: 460, padding: 20}}>
+        <App error={store.error} identiconSize={200} salt={store.salt} actionButton={Action} />
+      </div>
     </MuiThemeProvider>, document.getElementById('root'));
 }
 ReactDOM.render(
@@ -166,7 +195,7 @@ chrome.runtime.sendMessage(null,
 
 
 /*chrome.storage.local.get('passphrase', function(object) {
-  console.log(object.passphrase);
+  console.debug(object.passphrase);
   if(object.passphrase)
     document.getElementById('passphrase').value = object.passphrase;
 });
